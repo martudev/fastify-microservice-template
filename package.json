@@ -1,0 +1,66 @@
+{
+  "name": "fastify-microservice-template",
+  "version": "3.0.1",
+  "description": "A Fastify microservice template",
+  "scripts": {
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix .",
+    "lint-md": "remark -f .",
+    "lint-docker": "dockerfilelint Dockerfile",
+    "start": "node index.js",
+    "start-dev": "nodemon -e js index.js",
+    "test": "jest",
+    "swagger": "node ./src/plugins/swagger/build.js"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint-fix && npm run lint-md && npm test"
+    }
+  },
+  "keywords": [
+    "fastify",
+    "microservice"
+  ],
+  "engines": {
+    "node": ">=14.*"
+  },
+  "author": "DevGurus.io",
+  "license": "ISC",
+  "imports": {
+    "#plugins/*": "./src/plugins/*/index.js",
+    "#errors": "./src/errors/index.js",
+    "#routes": "./src/api/routes.js"
+  },
+  "dependencies": {
+    "commercetools-entities-schemas": "^1.1.6",
+    "dotenv": "^10.0.0",
+    "fastify": "^3.17.0",
+    "fastify-autoload": "^3.7.1",
+    "fastify-commercetools": "^1.0.6",
+    "fastify-cors": "^6.0.2",
+    "fastify-env": "^2.1.1",
+    "fastify-healthcheck": "^3.0.0",
+    "fastify-metrics": "^7.2.1",
+    "fastify-plugin": "^3.0.0",
+    "fastify-swagger": "^4.12.5",
+    "pino-pretty": "^5.0.2",
+    "stripe": "^8.197.0"
+  },
+  "devDependencies": {
+    "dockerfilelint": "^1.8.0",
+    "eslint": "^7.28.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-jest": "^24.3.6",
+    "eslint-plugin-prettier": "^3.4.0",
+    "husky": "^6.0.0",
+    "jest": "^27.0.4",
+    "nodemon": "^2.0.6",
+    "prettier-eslint": "^12.0.0",
+    "remark": "^13.0.0",
+    "remark-cli": "^9.0.0",
+    "remark-lint": "^8.0.0",
+    "remark-preset-lint-consistent": "^4.0.0",
+    "remark-preset-lint-markdown-style-guide": "^4.0.0",
+    "remark-preset-lint-recommended": "^5.0.0"
+  }
+}

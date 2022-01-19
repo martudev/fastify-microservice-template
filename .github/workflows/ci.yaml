@@ -1,0 +1,130 @@
+name: CI workflow
+
+on:
+  pull_request:
+  # We need to run it again on merge to main branch as we use squash commits.
+  push:
+    branches: [main]
+
+env:
+  NODE_VERSION: 14
+
+jobs:
+  lint:
+    name: linter
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://npm.pkg.github.com'
+      - name: Run npm install
+        run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_PAT }} # Personal Access Token to use packages from Github Registry
+      - name: NPM lint
+        run: npm run lint
+      - name: Markdown Lint
+        run: npm run lint-md
+      - name: Docker Hadolint
+        run: |
+          wget https://github.com/hadolint/hadolint/releases/download/v1.19.0/hadolint-Linux-x86_64 -O /tmp/hadolint
+          chmod +x /tmp/hadolint
+          /tmp/hadolint Dockerfile
+      - name: Yaml Lint
+        run: |
+          pip install yamllint
+          yamllint -c .yamllint-config.yaml .
+
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://npm.pkg.github.com'
+      - name: Run npm install
+        run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_PAT }} # Personal Access Token to use packages from Github Registry
+      - name: Run npm test
+        run: npm test
+      - name: Save coverage artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: lcov
+          path: coverage/lcov.info
+
+  sonarcloud:
+    needs: test
+    name: SonarCloud
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: lcov
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  audit:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://npm.pkg.github.com'
+      - name: Run npm install
+        run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_PAT }} # Personal Access Token to use packages from Github Registry
+      - name: Run npm audit
+        run: npm audit
